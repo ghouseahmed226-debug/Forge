@@ -6,10 +6,7 @@ Protects unit economics and notifies Sentry if any check fails to fire.
 import logging
 from dataclasses import dataclass
 from datetime import datetime, timezone
-try:
-    import sentry_sdk
-except ImportError:
-    sentry_sdk = None
+import sentry_sdk
 
 from db.supabase_client import get_admin_client
 
@@ -52,7 +49,6 @@ class SpendGuard:
             month_start = datetime(now.year, now.month, 1, tzinfo=timezone.utc).isoformat()
 
             # 3. Sum routing logs for user's projects created this month
-            # Join projects -> routing_logs
             projects_res = client.table("projects").select("id").eq("owner_id", user_id).execute()
             project_ids = [p["id"] for p in (projects_res.data or [])]
 
@@ -90,9 +86,7 @@ class SpendGuard:
 
         except Exception as e:
             logger.error("Spend guard check failed: %s", e)
-            if sentry_sdk:
-                sentry_sdk.capture_exception(e)
-            # Fail closed or with conservative allowance for dev
+            sentry_sdk.capture_exception(e)
             return SpendCheckResult(
                 allowed=True,
                 current_spend_usd=0.0,

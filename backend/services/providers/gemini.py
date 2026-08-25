@@ -4,12 +4,11 @@ import logging
 import time
 
 import google.generativeai as genai
-from google.api_core.exceptions import ResourceExhausted, GoogleAPIError
+from google.api_core.exceptions import GoogleAPIError, ResourceExhausted
 
 from config import settings
 from services.providers.base import (
     FAST_TIER,
-    REASONING_TIER,
     LLMProvider,
     ProviderError,
     ProviderResponse,

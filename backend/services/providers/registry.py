@@ -6,10 +6,15 @@ import logging
 
 import sentry_sdk
 
-from services.providers.base import FAST_TIER, REASONING_TIER, LLMProvider, ProviderError
 from services.providers.anthropic import AnthropicProvider
-from services.providers.openai import OpenAIProvider
+from services.providers.base import (
+    FAST_TIER,
+    REASONING_TIER,
+    LLMProvider,
+    ProviderError,
+)
 from services.providers.gemini import GeminiProvider
+from services.providers.openai import OpenAIProvider
 
 logger = logging.getLogger(__name__)
 

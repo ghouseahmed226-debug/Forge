@@ -3,7 +3,7 @@ Rules-based task classifier and router engine.
 NO machine learning. Pure keyword/category matching.
 This is v1 — the data to justify an ML classifier comes from routing_feedback logs.
 """
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
 
 from services.providers.base import FAST_TIER, REASONING_TIER

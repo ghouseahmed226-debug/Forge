@@ -1,0 +1,10 @@
+[lint]
+select = ["E", "F", "W"]
+ignore = [
+    "E501",   # line length
+    "BLE001", # blind exception catch
+    "F841",   # unused variable
+]
+
+[lint.per-file-ignores]
+"tests/*" = ["ALL"]

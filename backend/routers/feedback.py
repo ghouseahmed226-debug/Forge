@@ -3,7 +3,8 @@ Feedback and Activation Router.
 Handles user ratings (good/bad), subjective comments, and product activation tracking.
 """
 import logging
-from typing import Optional, Dict, Any
+from typing import Any
+
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
@@ -16,15 +17,15 @@ router = APIRouter(tags=["feedback"])
 
 class FeedbackRequest(BaseModel):
     project_id: str
-    user_id: Optional[str] = "00000000-0000-0000-0000-000000000001"
+    user_id: str | None = "00000000-0000-0000-0000-000000000001"
     rating: str  # 'good' | 'bad'
-    comment: Optional[str] = None
+    comment: str | None = None
 
 
 class ActivationEventRequest(BaseModel):
     user_id: str
     event_type: str  # 'signed_up' | 'first_prompt' | 'first_deploy' | 'session_start'
-    metadata: Optional[Dict[str, Any]] = None
+    metadata: dict[str, Any] | None = None
 
 
 @router.post("/feedback")
@@ -54,7 +55,7 @@ async def get_project_feedback(project_id: str):
     try:
         res = client.table("build_feedback").select("*").eq("project_id", project_id).execute()
         return {"feedback": res.data or []}
-    except Exception as e:
+    except Exception:
         return {"feedback": []}
 
 

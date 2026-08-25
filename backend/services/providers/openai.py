@@ -3,12 +3,11 @@ import asyncio
 import logging
 import time
 
-from openai import AsyncOpenAI, RateLimitError, APIError
+from openai import APIError, AsyncOpenAI, RateLimitError
 
 from config import settings
 from services.providers.base import (
     FAST_TIER,
-    REASONING_TIER,
     LLMProvider,
     ProviderError,
     ProviderResponse,
@@ -66,7 +65,7 @@ class OpenAIProvider(LLMProvider):
                 t0 = time.monotonic()
                 response = await self._client.chat.completions.create(
                     model=self._model,
-                    messages=all_messages,
+                    messages=all_messages,  # type: ignore[arg-type]
                     max_tokens=max_tokens,
                 )
                 elapsed = time.monotonic() - t0

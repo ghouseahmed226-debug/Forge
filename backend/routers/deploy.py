@@ -3,24 +3,24 @@ Deploy Router.
 Handles one-click deployments and status checks.
 """
 import logging
-from typing import Optional
+
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from db.supabase_client import get_admin_client
-from services.deploy_service import DeployService
 from services.activation_tracker import ActivationTracker
+from services.deploy_service import DeployService
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["deploy"])
 
 
 class DeployRequest(BaseModel):
-    user_id: Optional[str] = "00000000-0000-0000-0000-000000000001"
+    user_id: str | None = "00000000-0000-0000-0000-000000000001"
 
 
 @router.post("/projects/{project_id}/deploy")
-async def trigger_deploy(project_id: str, req: Optional[DeployRequest] = None):
+async def trigger_deploy(project_id: str, req: DeployRequest | None = None):
     """Trigger a one-click deployment for a ready project."""
     client = get_admin_client()
     uid = (req and req.user_id) or "00000000-0000-0000-0000-000000000001"
@@ -31,7 +31,7 @@ async def trigger_deploy(project_id: str, req: Optional[DeployRequest] = None):
         files_res = client.table("project_files").select("*").eq("project_id", project_id).execute()
         project = proj_res.data or {"title": "Generated Project", "project_type": "website"}
         files = files_res.data or []
-    except Exception as e:
+    except Exception:
         project = {"title": "Generated Project", "project_type": "website"}
         files = []
 

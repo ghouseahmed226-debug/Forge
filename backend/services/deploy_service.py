@@ -6,10 +6,8 @@ Handles one-click deployment for generated projects:
 """
 import logging
 from dataclasses import dataclass
-from typing import List, Dict, Optional
-import httpx
+
 import sentry_sdk
-from config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -17,9 +15,9 @@ logger = logging.getLogger(__name__)
 @dataclass
 class DeployResult:
     success: bool
-    url: Optional[str] = None
-    deploy_id: Optional[str] = None
-    error: Optional[str] = None
+    url: str | None = None
+    deploy_id: str | None = None
+    error: str | None = None
     deployment_type: str = "static"
 
 
@@ -30,7 +28,7 @@ class DeployService:
         self,
         project_id: str,
         title: str,
-        files: List[Dict[str, str]]
+        files: list[dict[str, str]]
     ) -> DeployResult:
         """Deploys a static export website to Vercel or preview host."""
         try:
@@ -49,7 +47,7 @@ class DeployService:
             sentry_sdk.capture_exception(e)
             return DeployResult(
                 success=False,
-                error=f"Deployment pipeline failed: {str(e)}",
+                error=f"Deployment pipeline failed: {e!s}",
                 deployment_type="static_website"
             )
 
@@ -57,7 +55,7 @@ class DeployService:
         self,
         project_id: str,
         title: str,
-        files: List[Dict[str, str]]
+        files: list[dict[str, str]]
     ) -> DeployResult:
         """Deploys a full-stack data-backed application with Supabase integration."""
         try:
@@ -75,6 +73,6 @@ class DeployService:
             sentry_sdk.capture_exception(e)
             return DeployResult(
                 success=False,
-                error=f"Application deployment failed: {str(e)}",
+                error=f"Application deployment failed: {e!s}",
                 deployment_type="fullstack_application"
             )

@@ -5,11 +5,7 @@ Logs pass/fail results per gate to the routing_logs system.
 """
 import logging
 from dataclasses import dataclass
-from typing import List, Dict, Any, Optional
-import json
-
-from services.providers.base import FAST_TIER
-from services.providers.registry import get_provider_with_fallback
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -19,8 +15,8 @@ class GateResult:
     gate_name: str
     passed: bool
     details: str
-    score: Optional[float] = None
-    metric_data: Optional[Dict[str, Any]] = None
+    score: float | None = None
+    metric_data: dict[str, Any] | None = None
 
 
 class QualityGateRunner:
@@ -30,13 +26,13 @@ class QualityGateRunner:
         self,
         project_id: str,
         project_type: str,
-        files: List[Dict[str, str]],
+        files: list[dict[str, str]],
         critic_passed: bool = True
-    ) -> List[GateResult]:
+    ) -> list[GateResult]:
         """Execute all relevant quality gates according to project type."""
-        results: List[GateResult] = []
+        results: list[GateResult] = []
 
-        file_contents_summary = "\n---\n".join(
+        "\n---\n".join(
             [f"File: {f.get('path', 'unknown')}\n{f.get('content', '')[:1000]}" for f in files[:8]]
         )
 
@@ -84,16 +80,15 @@ class QualityGateRunner:
 
         return results
 
-    def _audit_design_tokens(self, files: List[Dict[str, str]]) -> GateResult:
+    def _audit_design_tokens(self, files: list[dict[str, str]]) -> GateResult:
         """Gate 1: Reject the 3 AI-generic defaults. Require a subject-grounded palette."""
-        has_palette = False
         forbidden_defaults = False
 
         for f in files:
             content = f.get("content", "")
             # Check for customized theme/tokens
             if "tailwind.config" in f.get("path", "") or "globals.css" in f.get("path", "") or "theme" in content:
-                has_palette = True
+                pass
             if "terracotta" in content and "serif" in content and "cream" in content:
                 forbidden_defaults = True
 
@@ -105,13 +100,11 @@ class QualityGateRunner:
             score=1.0 if passed else 0.0
         )
 
-    def _check_typography(self, files: List[Dict[str, str]]) -> GateResult:
+    def _check_typography(self, files: list[dict[str, str]]) -> GateResult:
         """Gate 2: Verify display/body/mono pairing is applied, not framework defaults."""
-        has_font_pairing = False
         for f in files:
             content = f.get("content", "")
             if "font-mono" in content or "Space Grotesk" in content or "Inter" in content or "font-sans" in content:
-                has_font_pairing = True
                 break
 
         return GateResult(
@@ -121,7 +114,7 @@ class QualityGateRunner:
             score=1.0
         )
 
-    def _check_copy_quality(self, files: List[Dict[str, str]]) -> GateResult:
+    def _check_copy_quality(self, files: list[dict[str, str]]) -> GateResult:
         """Gate 3: Verify copy is specific to subject, no placeholder filler text."""
         placeholder_detected = False
         for f in files:
@@ -138,7 +131,7 @@ class QualityGateRunner:
             score=1.0 if passed else 0.8
         )
 
-    def _check_responsive_layout(self, files: List[Dict[str, str]]) -> GateResult:
+    def _check_responsive_layout(self, files: list[dict[str, str]]) -> GateResult:
         """Gate 4: Render checks at mobile (375px), tablet (768px), desktop (1440px)."""
         has_responsive_classes = False
         for f in files:
@@ -155,7 +148,7 @@ class QualityGateRunner:
             metric_data={"mobile_375px": "pass", "tablet_768px": "pass", "desktop_1440px": "pass"}
         )
 
-    def _check_accessibility(self, files: List[Dict[str, str]]) -> GateResult:
+    def _check_accessibility(self, files: list[dict[str, str]]) -> GateResult:
         """Gate 5: WCAG 2.1 AA check (contrast, aria, focus states, reduced-motion)."""
         return GateResult(
             gate_name="accessibility_pass",
@@ -165,7 +158,7 @@ class QualityGateRunner:
             metric_data={"wcag_level": "AA", "aria_coverage": "100%", "focus_visible": True}
         )
 
-    def _check_performance(self, files: List[Dict[str, str]]) -> GateResult:
+    def _check_performance(self, files: list[dict[str, str]]) -> GateResult:
         """Gate 6: Core Web Vitals (LCP < 2.5s, CLS < 0.1, INP < 200ms)."""
         return GateResult(
             gate_name="performance_pass",
@@ -175,7 +168,7 @@ class QualityGateRunner:
             metric_data={"LCP": "0.8s", "CLS": "0.02", "INP": "45ms"}
         )
 
-    def _check_seo(self, files: List[Dict[str, str]]) -> GateResult:
+    def _check_seo(self, files: list[dict[str, str]]) -> GateResult:
         """Gate 7: SEO Pass for static websites (metadata, sitemap, robots)."""
         has_metadata = False
         for f in files:
@@ -191,7 +184,7 @@ class QualityGateRunner:
             score=1.0
         )
 
-    def _check_empty_and_error_states(self, files: List[Dict[str, str]]) -> GateResult:
+    def _check_empty_and_error_states(self, files: list[dict[str, str]]) -> GateResult:
         """Gate 8: Ensure lists, tables, and views have designated empty & error states."""
         return GateResult(
             gate_name="empty_error_state_check",
@@ -200,7 +193,7 @@ class QualityGateRunner:
             score=1.0
         )
 
-    def _check_cross_browser(self, files: List[Dict[str, str]]) -> GateResult:
+    def _check_cross_browser(self, files: list[dict[str, str]]) -> GateResult:
         """Gate 9: Cross-browser rendering check (Chromium, WebKit, Firefox engines)."""
         return GateResult(
             gate_name="cross_browser_smoke_test",
@@ -210,7 +203,7 @@ class QualityGateRunner:
             metric_data={"chromium": "pass", "webkit": "pass", "firefox": "pass"}
         )
 
-    def _check_build_smoke_test(self, files: List[Dict[str, str]]) -> GateResult:
+    def _check_build_smoke_test(self, files: list[dict[str, str]]) -> GateResult:
         """Gate 11: Final automated smoke-test gate. Confirms project builds and boots."""
         has_files = len(files) > 0
         return GateResult(

@@ -4,7 +4,7 @@ Handles project management, file tree retrieval, routing logs inspection,
 collaborator invitations, and manual model override feedback logging.
 """
 import logging
-from typing import Optional, List, Dict, Any
+
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
@@ -25,7 +25,7 @@ class ManualOverrideRequest(BaseModel):
 
 
 @router.get("/projects")
-async def list_projects(user_id: Optional[str] = None):
+async def list_projects(user_id: str | None = None):
     """List projects owned by user or shared via collaborator role."""
     client = get_admin_client()
     uid = user_id or "00000000-0000-0000-0000-000000000001"
@@ -69,7 +69,7 @@ async def get_routing_logs(project_id: str):
     try:
         res = client.table("routing_logs").select("*").eq("project_id", project_id).order("created_at").execute()
         return {"logs": res.data or []}
-    except Exception as e:
+    except Exception:
         return {"logs": []}
 
 
@@ -82,7 +82,7 @@ async def add_collaborator(project_id: str, req: CollaboratorRequest):
         profile_res = client.table("profiles").select("id").eq("email", req.user_email).single().execute()
         if not profile_res.data:
             raise HTTPException(status_code=404, detail="User with that email not found")
-        
+
         target_uid = profile_res.data["id"]
         client.table("project_collaborators").insert({
             "project_id": project_id,
@@ -112,5 +112,5 @@ async def log_manual_override(project_id: str, file_id: str, req: ManualOverride
                 "was_manual_override": True
             }).execute()
         return {"status": "override_recorded"}
-    except Exception as e:
+    except Exception:
         return {"status": "override_logged_local"}

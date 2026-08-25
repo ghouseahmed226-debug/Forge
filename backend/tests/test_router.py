@@ -6,16 +6,15 @@ Unit tests for Router Engine:
 4. Subtask decomposition per project type
 5. Explicit routing table mapping
 """
-import pytest
+from services.providers.base import FAST_TIER, REASONING_TIER
 from services.router_engine import (
-    classify_project_type,
-    decompose_prompt,
+    ROUTING_TABLE,
     ProjectType,
     TaskType,
-    ROUTING_TABLE,
+    classify_project_type,
+    decompose_prompt,
     get_routing_explanation,
 )
-from services.providers.base import FAST_TIER, REASONING_TIER
 
 
 def test_classify_website_prompts():

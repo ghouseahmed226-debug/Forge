@@ -3,10 +3,9 @@ Prompt Moderation Service.
 Screens user prompts before generation to detect and block malicious intents:
 phishing, credential scrapers, spam infrastructure, and exploit generators.
 """
-import re
 import logging
+import re
 from dataclasses import dataclass
-from typing import Optional, List
 
 logger = logging.getLogger(__name__)
 
@@ -37,8 +36,8 @@ MALWARE_PATTERNS = [
 @dataclass
 class ModerationResult:
     safe: bool
-    reason: Optional[str] = None
-    category: Optional[str] = None
+    reason: str | None = None
+    category: str | None = None
 
 
 class PromptModerator:

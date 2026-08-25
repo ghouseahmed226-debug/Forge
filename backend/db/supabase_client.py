@@ -3,12 +3,8 @@ Supabase client helper.
 Provides standard anonymous client and privileged admin client (service role).
 """
 import logging
-from typing import Optional, Any
-try:
-    from supabase import create_client, Client
-except ImportError:
-    create_client = None
-    Client = Any
+from typing import Optional
+from supabase import create_client, Client
 from config import settings
 
 logger = logging.getLogger(__name__)

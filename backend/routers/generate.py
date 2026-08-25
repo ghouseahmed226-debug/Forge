@@ -15,45 +15,45 @@ import json
 import logging
 import time
 import uuid
-from typing import Optional, Dict, Any, List
-from fastapi import APIRouter, HTTPException, Depends, Request
+from typing import Any
+
+from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from db.supabase_client import get_admin_client
+from services.activation_tracker import ActivationTracker
+from services.critic import CriticService
+from services.moderation import PromptModerator
+from services.providers.registry import get_provider_with_fallback
+from services.quality_gates import QualityGateRunner
 from services.router_engine import (
-    classify_project_type,
-    decompose_prompt,
     ProjectType,
     TaskType,
-    ROUTING_TABLE,
+    classify_project_type,
+    decompose_prompt,
 )
-from services.providers.registry import get_provider_with_fallback
-from services.critic import CriticService
-from services.quality_gates import QualityGateRunner
 from services.spend_guard import SpendGuard
-from services.moderation import PromptModerator
-from services.activation_tracker import ActivationTracker
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["generation"])
 
 # In-memory event queues for live SSE streaming per project
-_STREAM_QUEUES: Dict[str, asyncio.Queue] = {}
+_STREAM_QUEUES: dict[str, asyncio.Queue] = {}
 
 
 class GenerateRequest(BaseModel):
     prompt: str
-    project_type: Optional[str] = None  # 'website' | 'application' | None
-    preferred_provider: Optional[str] = "anthropic"
-    owner_id: Optional[str] = None  # Supabase user uuid or default
+    project_type: str | None = None  # 'website' | 'application' | None
+    preferred_provider: str | None = "anthropic"
+    owner_id: str | None = None  # Supabase user uuid or default
 
 
 class GenerateResponse(BaseModel):
     project_id: str
     project_type: str
     requires_confirmation: bool = False
-    ambiguity_details: Optional[str] = None
+    ambiguity_details: str | None = None
     status: str = "generating"
 
 
@@ -120,7 +120,7 @@ async def create_generation(req: GenerateRequest):
         logger.warning("Could not persist initial project to DB (running offline mode): %s", e)
 
     # Create event queue for SSE
-    queue = asyncio.Queue()
+    queue: asyncio.Queue[Any] = asyncio.Queue()
     _STREAM_QUEUES[project_id] = queue
 
     # Start generation pipeline in background
@@ -159,7 +159,7 @@ async def _run_generation_pipeline(
     critic_service = CriticService()
     gate_runner = QualityGateRunner()
 
-    generated_files: List[Dict[str, str]] = []
+    generated_files: list[dict[str, str]] = []
     critic_flagged = False
 
     try:
@@ -206,7 +206,7 @@ async def _run_generation_pipeline(
             )
 
             # LLM Provider Call with Fallback
-            provider_resp, model_used, was_fallback = await get_provider_with_fallback(
+            provider_resp, model_used, _was_fallback = await get_provider_with_fallback(
                 tier=tier,
                 preferred=preferred_provider,
                 messages=[{"role": "user", "content": user_prompt}],
@@ -254,7 +254,6 @@ async def _run_generation_pipeline(
                 logger.debug("DB log insert skipped: %s", e)
 
             # Run Critic Pass if required (Apps only on security-sensitive tasks)
-            revised_code = None
             if task.requires_critic and project_type == ProjectType.APPLICATION:
                 await queue.put({
                     "event_type": "critic_started",

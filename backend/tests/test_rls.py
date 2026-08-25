@@ -5,10 +5,9 @@ Specifically tests negative access cases:
 2. User A cannot read User B's unshared project (returns 0 rows).
 3. Adding User A as 'viewer' grants SELECT access, but rejects UPDATE access.
 """
-import pytest
 import os
-from unittest.mock import MagicMock, patch
-from db.supabase_client import get_supabase_client, get_admin_client
+
+import pytest
 
 
 @pytest.mark.integration

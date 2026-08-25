@@ -4,9 +4,11 @@ Unit tests for Spend Guard:
 2. Block generation when estimated cost would exceed monthly spend cap
 3. Remaining budget arithmetic
 """
-import pytest
 from unittest.mock import MagicMock, patch
-from services.spend_guard import SpendGuard, SpendCheckResult
+
+import pytest
+
+from services.spend_guard import SpendGuard
 
 
 @pytest.mark.asyncio

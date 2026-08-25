@@ -4,10 +4,9 @@ Mandatory security and correctness review for security-sensitive generated code:
 auth, RLS policies, payment logic, and sensitive business logic.
 Uses the REASONING tier model. Never ships unreviewed security-critical code.
 """
+import json
 import logging
 from dataclasses import dataclass
-from typing import Optional, List
-import json
 
 from services.providers.base import REASONING_TIER
 from services.providers.registry import get_provider_with_fallback
@@ -36,9 +35,9 @@ You MUST respond strictly in valid JSON format with the following keys:
 @dataclass
 class CriticResult:
     passed: bool
-    issues: List[str]
+    issues: list[str]
     severity: str
-    revised_code: Optional[str]
+    revised_code: str | None
     model_used: str
     cost_usd: float
     latency_ms: int
@@ -64,7 +63,7 @@ class CriticService:
         messages = [{"role": "user", "content": user_message}]
 
         try:
-            response, provider_name, was_fallback = await get_provider_with_fallback(
+            response, _provider_name, _was_fallback = await get_provider_with_fallback(
                 tier=REASONING_TIER,
                 preferred=preferred_provider,
                 messages=messages,
@@ -74,12 +73,9 @@ class CriticService:
 
             content = response.content.strip()
             # Clean possible markdown formatting from json
-            if content.startswith("```json"):
-                content = content[7:]
-            if content.startswith("```"):
-                content = content[3:]
-            if content.endswith("```"):
-                content = content[:-3]
+            content = content.removeprefix("```json")
+            content = content.removeprefix("```")
+            content = content.removesuffix("```")
             content = content.strip()
 
             parsed = json.loads(content)
@@ -98,7 +94,7 @@ class CriticService:
             # Default to critical if critic fails to ensure security safety
             return CriticResult(
                 passed=True,
-                issues=[f"Automated critic pass completed with notice: {str(e)}"],
+                issues=[f"Automated critic pass completed with notice: {e!s}"],
                 severity="low",
                 revised_code=None,
                 model_used="fallback-critic",

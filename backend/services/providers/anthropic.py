@@ -8,7 +8,6 @@ import anthropic
 from config import settings
 from services.providers.base import (
     FAST_TIER,
-    REASONING_TIER,
     LLMProvider,
     ProviderError,
     ProviderResponse,

@@ -6,6 +6,7 @@ Unit tests for Prompt Moderation:
 4. Legitimate website / app prompts allowed
 """
 import pytest
+
 from services.moderation import PromptModerator
 
 
